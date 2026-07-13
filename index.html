@@ -82,6 +82,15 @@
     letter-spacing: 0.5px;
     padding: 4px;
   }
+  #adBox #adContent .adEmail, #adBox2 #adContent2 .adEmail{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size: clamp(6.5px, 1.9vw, 9px);
+    letter-spacing: 0;
+    word-break: break-all;
+    margin-top: 3px;
+    color: var(--text-dim);
+  }
   #adBox img, #adBox video, #adBox2 img, #adBox2 video{ width:100%; height:100%; object-fit:cover; }
 
   /* ---- top-right live leaderboard ---- */
@@ -232,6 +241,14 @@
   }
   @keyframes pulse{ 0%,100%{ transform: scale(1);} 50%{ transform: scale(1.045);} }
 
+  .bigBtn.outline{
+    color: var(--accent);
+    background: transparent;
+    border: 2px solid var(--accent);
+    box-shadow: none;
+    animation: none;
+  }
+
   .linkBtn{ font-size: 10.5px; color: var(--text-dim); text-decoration: underline; margin-top: 2px; }
 
   #board{
@@ -256,6 +273,8 @@
   .boardRow.me{ border-color: rgba(212,255,61,0.5); background: rgba(212,255,61,0.06); }
   #boardStatus{ font-size:10.5px; color:var(--text-dim); }
 </style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1518474034105850"
+     crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -264,8 +283,8 @@
   <div id="scanlines"></div>
 
   <!-- Ad slots: to run a campaign, set #adBox/#adBox2's background-image, or replace #adContent/#adContent2 with an <img>/<video> -->
-  <div id="adBox"><div id="adContent">AD<br>INQUIRY</div></div>
-  <div id="adBox2"><div id="adContent2">AD<br>INQUIRY</div></div>
+  <div id="adBox"><div id="adContent">&#9993;<span class="adEmail">lnjkr1480@hanmail.net</span></div></div>
+  <div id="adBox2"><div id="adContent2">&#9993;<span class="adEmail">lnjkr1480@hanmail.net</span></div></div>
 
   <div id="liveBoard">
     <div class="liveBoardTitle">TOP 10</div>
@@ -607,10 +626,11 @@
     return s - Math.floor(s);
   }
 
-  function drawCaveBackground(w, h, ox, oy){
+  function drawCaveBackground(w, h, ox, oy, theme){
     const cellB = CELL * 1.7;
     const minX = Math.floor((0-ox)/cellB) - 1, maxX = Math.ceil((w-ox)/cellB) + 1;
     const minY = Math.floor((0-oy)/cellB) - 1, maxY = Math.ceil((h-oy)/cellB) + 1;
+    const tinted = theme && theme.tier > 0;
     for(let ty = minY; ty <= maxY; ty++){
       for(let tx = minX; tx <= maxX; tx++){
         const pick = hash2(tx*3.1, ty*7.7);
@@ -620,10 +640,16 @@
         const cx = tx*cellB + ox + cellB/2 + jx;
         const cy = ty*cellB + oy + cellB/2 + jy;
         const r = cellB * (0.22 + hash2(tx*2, ty*2) * 0.32);
-        const shade = 18 + Math.floor(hash2(tx*5, ty*5) * 16);
         tctx.beginPath();
         tctx.arc(cx, cy, r, 0, Math.PI*2);
-        tctx.fillStyle = `rgba(${shade+6},${shade+6},${shade+18},0.55)`;
+        if(tinted){
+          const h2 = (theme.hue + hash2(tx*5, ty*5)*40) % 360;
+          const l = 14 + hash2(tx*9, ty*9) * 10 + Math.min(10, theme.tier*1.2);
+          tctx.fillStyle = `hsla(${h2}, ${Math.min(60, 25 + theme.tier*4)}%, ${l}%, 0.55)`;
+        } else {
+          const shade = 18 + Math.floor(hash2(tx*5, ty*5) * 16);
+          tctx.fillStyle = `rgba(${shade+6},${shade+6},${shade+18},0.55)`;
+        }
         tctx.fill();
       }
     }
@@ -695,11 +721,50 @@
     }
   }
 
+  // ---------- score-based background themes (changes every 1000 points, gets flashier as score climbs) ----------
+  function getThemeForScore(sc){
+    const tier = Math.floor(sc / 1000);
+    const hue = (tier * 47) % 360; // spread distinct hues across tiers
+    return { tier, hue };
+  }
+
+  function drawThemeBackground(w, h, theme){
+    if(theme.tier <= 0){
+      tctx.fillStyle = '#0F0F1A';
+      tctx.fillRect(0,0,w,h);
+      return;
+    }
+    const glowAlpha = Math.min(0.55, 0.10 + theme.tier * 0.05);
+    const grad = tctx.createRadialGradient(w/2, h*0.32, 0, w/2, h*0.32, Math.max(w,h)*0.95);
+    grad.addColorStop(0, `hsla(${theme.hue}, 85%, 55%, ${glowAlpha})`);
+    grad.addColorStop(0.55, `hsla(${(theme.hue+30)%360}, 70%, 30%, ${glowAlpha*0.4})`);
+    grad.addColorStop(1, '#0A0A12');
+    tctx.fillStyle = grad;
+    tctx.fillRect(0,0,w,h);
+  }
+
+  function drawThemeStars(w, h, theme){
+    if(theme.tier <= 0) return;
+    const count = Math.min(80, theme.tier * 12);
+    const t = performance.now() / 550;
+    for(let i=0;i<count;i++){
+      const sx = hash2(i*12.9, 1.3) * w;
+      const sy = hash2(i*3.7, 5.1) * h;
+      const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(t + i*1.7));
+      const size = 1 + hash2(i, 2.2) * (1.6 + Math.min(2.4, theme.tier*0.25));
+      tctx.beginPath();
+      tctx.arc(sx, sy, size, 0, Math.PI*2);
+      tctx.fillStyle = `hsla(${(theme.hue + i*11) % 360}, 90%, 75%, ${twinkle})`;
+      tctx.fill();
+    }
+  }
+
   function drawCave(){
     const w = trailCanvas.clientWidth, h = trailCanvas.clientHeight;
     tctx.clearRect(0,0,w,h);
-    tctx.fillStyle = '#0F0F1A';
-    tctx.fillRect(0,0,w,h);
+    const theme = getThemeForScore(score);
+    drawThemeBackground(w, h, theme);
+    drawThemeStars(w, h, theme);
 
     // screen shake on wall impact
     const impactElapsed0 = performance.now() - impactStartTime;
@@ -719,33 +784,41 @@
     const ox = w/2 - (cur.x + 0.5)*CELL;
     const oy = h*0.68 - (cur.y + 0.5)*CELL;
 
-    drawCaveBackground(w, h, ox, oy);
+    drawCaveBackground(w, h, ox, oy, theme);
 
     const winStart = Math.max(0, playerIndex - 50);
     const winEnd = Math.min(pts.length - 1, playerIndex + LOOKAHEAD);
 
     const toScreen = (p) => ({ x: (p.x + 0.5)*CELL + ox, y: (p.y + 0.5)*CELL + oy });
-    const RIBBON_W = CELL * 0.62;
+    const TILE_R = CELL * 0.34;
+    const LINK_W = CELL * 0.14;
 
+    // connecting line beneath the tiles, so the path direction stays readable when tiles cluster together
     tctx.lineCap = 'round';
     tctx.lineJoin = 'round';
-    tctx.lineWidth = RIBBON_W;
-
-    // draw only the actual passable path — nothing else is rendered
+    tctx.lineWidth = LINK_W;
     for(let i = winStart; i < winEnd; i++){
       const a = toScreen(pts[i]), b = toScreen(pts[i+1]);
       const consumed = (i+1) <= frontierIndex;
-
-      if(consumed){
-        tctx.strokeStyle = '#FF2E6E';
-      } else {
-        tctx.strokeStyle = '#FFFFFF';
-      }
+      tctx.strokeStyle = consumed ? 'rgba(255,46,110,0.55)' : 'rgba(255,255,255,0.45)';
       tctx.beginPath();
       tctx.moveTo(a.x, a.y);
       tctx.lineTo(b.x, b.y);
       tctx.stroke();
     }
+
+    // draw only the actual passable path — one rounded tile per step, nothing else rendered
+    for(let i = winStart; i <= winEnd; i++){
+      const s = toScreen(pts[i]);
+      const consumed = i <= frontierIndex;
+      tctx.beginPath();
+      tctx.arc(s.x, s.y, TILE_R, 0, Math.PI*2);
+      tctx.fillStyle = consumed ? '#FF2E6E' : '#FFFFFF';
+      tctx.shadowColor = consumed ? 'rgba(255,46,110,0.55)' : 'rgba(255,255,255,0.35)';
+      tctx.shadowBlur = 6;
+      tctx.fill();
+    }
+    tctx.shadowBlur = 0;
 
     // player glow radius (lit area)
     const px = w/2, py = h*0.68;
@@ -862,11 +935,11 @@
       frontierIndex = playerIndex - MAX_LEAD;
     }
 
+    const boosting = boostStreak >= MIN_STREAK_FOR_BOOST;
     if(dir === 'up'){
       maxHeight++;
-      const boosting = boostStreak >= MIN_STREAK_FOR_BOOST;
-      score += boosting ? 20 : 10;
     }
+    score += boosting ? 20 : 10;
 
     if(boostStreak >= MIN_STREAK_FOR_BOOST){
       const flameDir = { x: -v.x, y: -v.y };
@@ -980,7 +1053,7 @@
       The abyss speeds up every 10 seconds, and always stays close behind your current position.<br>
       Moving forward while boosting doubles your score.</div>
       <div class="bigBtn" id="startBtn">TAP TO START</div>
-      <div class="linkBtn" id="changeNick">Switch nickname</div>
+      <div class="bigBtn outline" id="changeNick">Switch nickname</div>
       <div id="boardStatus">Loading rankings...</div>
       <div id="board"></div>
     `;
@@ -1040,10 +1113,17 @@
       <div id="finalScore">${score}</div>
       <div class="sub">Best <span>${best}</span></div>
       <div class="bigBtn" id="retryBtn">TAP TO RETRY</div>
+      <div class="bigBtn outline" id="changeNickGO">Switch nickname</div>
       <div id="boardStatus">${submitting ? 'Submitting score...' : (improved ? '🎉 New personal best! Added to the leaderboard' : 'Leaderboard updated')}</div>
       <div id="board"></div>
     `;
     document.getElementById('retryBtn').addEventListener('pointerdown', (e)=>{ e.preventDefault(); beginPlay(); });
+    document.getElementById('changeNickGO').addEventListener('pointerdown', async (e)=>{
+      e.preventDefault();
+      await clearProfile();
+      nickname = null;
+      renderNickname(null);
+    });
     if(!submitting){
       const board = await fetchLeaderboard(10);
       renderBoardInto(document.getElementById('board'), document.getElementById('boardStatus'), board);
