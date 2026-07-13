@@ -1222,6 +1222,10 @@
   }
 
   function beginPlay(){
+    const appEl = document.getElementById('app');
+    if(appEl && appEl.scrollIntoView){
+      appEl.scrollIntoView({ behavior: 'auto', block: 'start' });
+    }
     startBgmForRun();
     resetRun();
     state = 'playing';
