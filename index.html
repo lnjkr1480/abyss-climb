@@ -17,18 +17,15 @@
     --accent: #4DE8FF;
     --text: #F5F5FF;
     --text-dim: #5C5C78;
-    --ad-w: clamp(84px, 22vw, 184px);
-    --ad-h: clamp(42px, 11vw, 92px);
     --live-w: clamp(92px, 27vw, 138px);
   }
 
   *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
 
   html, body{
-    margin:0; padding:0; height:100%; overflow:hidden;
+    margin:0; padding:0;
     background: var(--bg);
     font-family:'JetBrains Mono', monospace;
-    touch-action: none;
   }
 
   #app{
@@ -36,7 +33,72 @@
     width:100vw; height:100vh; height:100dvh;
     display:flex; flex-direction:column;
     background: radial-gradient(ellipse at 50% 0%, rgba(77,232,255,0.05), transparent 60%), var(--bg);
+    overflow:hidden;
+    touch-action: none;
   }
+
+  /* ---- real publisher content sections (site framing around the game) ---- */
+  .siteSection{
+    width:100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 42px 24px;
+    color: var(--text);
+    font-family:'JetBrains Mono', monospace;
+    line-height: 1.8;
+  }
+  .siteSection h1{
+    font-family:'Press Start 2P', monospace;
+    font-size: 20px;
+    color: var(--text);
+    text-shadow: 0 0 16px rgba(212,255,61,0.35);
+    line-height:1.6;
+    margin: 0 0 6px 0;
+  }
+  .siteSection .tagline{ color: var(--path); font-size: 12.5px; letter-spacing:0.5px; margin-bottom: 24px; }
+  .siteSection h2{
+    font-family:'Press Start 2P', monospace;
+    font-size: 12.5px;
+    color: var(--accent);
+    margin: 30px 0 12px 0;
+    letter-spacing: 0.5px;
+  }
+  .siteSection p{ font-size: 13px; color: var(--text-dim); margin: 0 0 14px 0; }
+  .siteSection p b, .siteSection li b{ color: var(--text); }
+  .siteSection ul{ margin:0 0 14px 0; padding-left: 18px; }
+  .siteSection li{ font-size: 13px; color: var(--text-dim); margin-bottom: 6px; }
+  .playBtn{
+    display:inline-block;
+    font-family:'Press Start 2P', monospace;
+    font-size: 12px;
+    color: var(--bg);
+    background: var(--path);
+    padding: 14px 26px;
+    border-radius: 8px;
+    box-shadow: 0 0 24px rgba(212,255,61,0.35);
+    text-decoration:none;
+    margin: 6px 0 8px 0;
+  }
+  .inlineAd{
+    margin: 26px auto;
+    max-width: 320px;
+    min-height: 90px;
+    background: var(--bg-panel);
+    border: 2px solid rgba(92,92,120,0.7);
+    border-radius: 10px;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+    gap:6px;
+    padding: 14px;
+    text-align:center;
+  }
+  .inlineAd .icon{ font-size: 20px; color: var(--text-dim); }
+  .inlineAd .email{ font-family:'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); word-break: break-all; }
+  .siteFooter{
+    text-align:center; padding: 20px 24px 40px 24px;
+    font-size: 11px; color: var(--text-dim);
+  }
+  .siteFooter a{ color: var(--accent); }
 
   #scanlines{
     position:absolute; inset:0; pointer-events:none; z-index:25;
@@ -56,42 +118,6 @@
   .stat .value{ font-size:18px; color:var(--text); font-family:'Press Start 2P', monospace; text-shadow: 0 0 10px rgba(212,255,61,0.35); }
   .stat.pace .value{ color: var(--danger); text-shadow: 0 0 10px rgba(255,46,110,0.35); font-size:16px;}
   .stat.right{ align-items:flex-end; }
-
-  /* ---- ad slots, stacked below the SCORE stat: swap #adBox/#adBox2's contents with an <img>/<video> when a campaign is booked ---- */
-  #adBox, #adBox2{
-    position:fixed;
-    left: 18px;
-    width: var(--ad-w); height: var(--ad-h);
-    z-index: 40;
-    background: var(--bg-panel);
-    border: 2px solid rgba(92,92,120,0.7);
-    border-radius: 10px;
-    display:flex; align-items:center; justify-content:center;
-    overflow:hidden;
-    background-size: cover;
-    background-position: center;
-  }
-  #adBox{ top: calc(max(12px, env(safe-area-inset-top)) + 62px); }
-  #adBox2{ top: calc(max(12px, env(safe-area-inset-top)) + 62px + var(--ad-h) + 8px); }
-  #adBox #adContent, #adBox2 #adContent2{
-    font-family:'Press Start 2P', monospace;
-    font-size: clamp(8px, 2.4vw, 12px);
-    line-height: 1.6;
-    text-align:center;
-    color: var(--text-dim);
-    letter-spacing: 0.5px;
-    padding: 4px;
-  }
-  #adBox #adContent .adEmail, #adBox2 #adContent2 .adEmail{
-    display:block;
-    font-family:'JetBrains Mono', monospace;
-    font-size: clamp(6.5px, 1.9vw, 9px);
-    letter-spacing: 0;
-    word-break: break-all;
-    margin-top: 3px;
-    color: var(--text-dim);
-  }
-  #adBox img, #adBox video, #adBox2 img, #adBox2 video{ width:100%; height:100%; object-fit:cover; }
 
   /* ---- top-right live leaderboard ---- */
   #liveBoard{
@@ -278,13 +304,39 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
+
+<section class="siteSection" id="siteIntro">
+  <h1>QUAD // ABYSS CLIMB</h1>
+  <div class="tagline">A one-tile-wide climb against a bottomless abyss.</div>
+
+  <p><b>QUAD // ABYSS CLIMB</b> is a free browser climbing game. A single connected trail winds
+  upward forever — one tile wide, never twice as wide — and a hungry abyss rises from below,
+  getting faster every ten seconds. Your only job is to stay on the ribbon and keep climbing
+  before the darkness catches up. There's nothing to install and no account to make; it works
+  the same on a phone in your pocket or a laptop at your desk.</p>
+
+  <h2>HOW TO PLAY</h2>
+  <ul>
+    <li><b>Up</b> moves forward one tile along the trail.</li>
+    <li><b>Left / Right</b> shifts you sideways one tile, following the path's shape.</li>
+    <li>To move diagonally, press two directions in sequence (e.g. Left, then Up).</li>
+    <li>Step off the visible trail — even by one tile — and it's game over instantly.</li>
+    <li>Moving quickly in a row builds a <b>boost streak</b>, which doubles the points from every step while it lasts.</li>
+  </ul>
+
+  <a href="#app" class="playBtn">▶ PLAY NOW</a>
+
+  <div class="inlineAd">
+    <div class="icon">&#9993;</div>
+    <div class="email">Ad inquiries: lnjkr1480@hanmail.net</div>
+  </div>
+</section>
+
 <div id="app">
   <div id="vignette"></div>
   <div id="scanlines"></div>
 
-  <!-- Ad slots: to run a campaign, set #adBox/#adBox2's background-image, or replace #adContent/#adContent2 with an <img>/<video> -->
-  <div id="adBox"><div id="adContent">&#9993;<span class="adEmail">lnjkr1480@hanmail.net</span></div></div>
-  <div id="adBox2"><div id="adContent2">&#9993;<span class="adEmail">lnjkr1480@hanmail.net</span></div></div>
+  <!-- Ad slots moved into the real-content sections below/above the game, see .inlineAd blocks -->
 
   <div id="liveBoard">
     <div class="liveBoardTitle">TOP 10</div>
@@ -319,6 +371,35 @@
   </div>
 </div>
 
+<section class="siteSection" id="siteInfo">
+  <h2>SCORING &amp; DIFFICULTY</h2>
+  <p>Every step earns points — 10 normally, 20 while boosting. The abyss below starts slow but
+  compresses its interval by roughly 28% every ten seconds, so runs get noticeably tighter the
+  longer you survive. The cave itself changes with your score too: every 1000 points the
+  background shifts to a new color theme, with more twinkling detail added at higher tiers —
+  the deeper (and higher) you climb, the more the world lights up.</p>
+
+  <h2>ONLINE LEADERBOARD</h2>
+  <p>Pick a nickname and your best score is saved to a public, worldwide leaderboard — no
+  password, no account. You can switch nicknames at any time from the ready screen or the
+  game-over screen if you want to start a fresh run under a different name.</p>
+
+  <h2>ABOUT THIS SITE</h2>
+  <p>QUAD // ABYSS CLIMB is an independently built, ad-supported browser game. It's free to play
+  and works on any modern phone or desktop browser. See our
+  <a href="/privacy.html" style="color:var(--accent)">Privacy Policy</a> for details on the
+  minimal data (nickname + score) the leaderboard stores.</p>
+
+  <div class="inlineAd">
+    <div class="icon">&#9993;</div>
+    <div class="email">Ad inquiries: lnjkr1480@hanmail.net</div>
+  </div>
+</section>
+
+<footer class="siteFooter">
+  QUAD // ABYSS CLIMB &nbsp;·&nbsp; <a href="/privacy.html">Privacy Policy</a> &nbsp;·&nbsp; lnjkr1480@hanmail.net
+</footer>
+
 <script>
 (function(){
   // ---------- Supabase (online leaderboard backend) ----------
@@ -343,6 +424,11 @@
   const trailWrap = document.getElementById('trailWrap');
   const trailCanvas = document.getElementById('trail');
   const tctx = trailCanvas.getContext('2d');
+
+  const liveBoardEl = document.getElementById('liveBoard');
+  function setLiveBoardVisible(visible){
+    if(liveBoardEl) liveBoardEl.style.display = visible ? '' : 'none';
+  }
 
   const BASE_INTERVAL = 900;
   const FLOOR_INTERVAL = 180;
@@ -1020,6 +1106,7 @@
 
   function renderNickname(prefill){
     state = 'nickname';
+    setLiveBoardVisible(true);
     showOverlay();
     ovContent.innerHTML = `
       <div class="title">QUAD<br>ABYSS CLIMB</div>
@@ -1043,6 +1130,7 @@
 
   async function renderReady(){
     state = 'ready';
+    setLiveBoardVisible(false);
     showOverlay();
     ovContent.innerHTML = `
       <div class="title">READY!</div>
@@ -1106,6 +1194,7 @@
 
   async function renderGameOver(submitting, improved){
     state = 'gameover';
+    setLiveBoardVisible(false);
     showOverlay();
     ovContent.innerHTML = `
       <div class="title danger">GAME OVER</div>
@@ -1136,6 +1225,7 @@
     startBgmForRun();
     resetRun();
     state = 'playing';
+    setLiveBoardVisible(true);
     hideOverlay();
     requestAnimationFrame(frontierLoop);
   }
