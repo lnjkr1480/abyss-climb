@@ -218,6 +218,11 @@
   }
   #overlay.hidden{ opacity:0; pointer-events:none; }
 
+  #ovContent{
+    width: min(320px, calc(100vw - 52px));
+    display:flex; flex-direction:column; align-items:center;
+  }
+
   .title{
     font-family:'Press Start 2P', monospace;
     font-size: 17px; color: var(--text);
@@ -1226,6 +1231,11 @@
     if(appEl && appEl.scrollIntoView){
       appEl.scrollIntoView({ behavior: 'auto', block: 'start' });
     }
+    // once play begins, lock page scrolling so the mobile browser's address bar
+    // stops showing/hiding (which otherwise resizes 100dvh and makes the game
+    // look bigger/smaller between screens)
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
     startBgmForRun();
     resetRun();
     state = 'playing';
